@@ -2,6 +2,8 @@ name: CepDosya APK
 on:
   push:
     branches: [cepdosya-apk]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: write
@@ -26,6 +28,7 @@ jobs:
           name: CepDosya-APK
           path: CepDosya-Redmi.apk
       - name: Publish APK
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
