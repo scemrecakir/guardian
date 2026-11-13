@@ -1,0 +1,33 @@
+name: CepDosya APK
+on:
+  push:
+    branches: [cepdosya-apk]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - run: gradle :app:assembleDebug --no-daemon --stacktrace
+      - run: cp app/build/outputs/apk/debug/app-debug.apk CepDosya-Redmi.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CepDosya-APK
+          path: CepDosya-Redmi.apk
+      - name: Publish APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete cepdosya-v1.0.0 --yes 2>/dev/null || true
+          gh release create cepdosya-v1.0.0 CepDosya-Redmi.apk --target "$GITHUB_SHA" --title "CepDosya v1.0.0" --notes "Redmi Note 14 Pro+ için dosya yöneticisi"

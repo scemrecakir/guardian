@@ -1,0 +1,11 @@
+package com.cepdosya.manager;
+import android.content.*;import android.database.*;import android.net.Uri;import android.os.*;import android.provider.OpenableColumns;import android.webkit.MimeTypeMap;import java.io.*;import java.util.*;
+public class ShareProvider extends ContentProvider {
+ public static Uri uriFor(File f){return new Uri.Builder().scheme("content").authority("com.cepdosya.manager.provider").appendPath("f").appendPath(f.getAbsolutePath()).build();}
+ @Override public boolean onCreate(){return true;}
+ File safe(Uri u)throws FileNotFoundException {if(u.getPathSegments().size()!=2||!"f".equals(u.getPathSegments().get(0)))throw new FileNotFoundException();File f=new File(u.getPathSegments().get(1));try{String root=Environment.getExternalStorageDirectory().getCanonicalPath(),p=f.getCanonicalPath();if(!p.startsWith(root+File.separator))throw new FileNotFoundException("Forbidden");}catch(IOException e){throw new FileNotFoundException();}if(!f.isFile())throw new FileNotFoundException();return f;}
+ @Override public ParcelFileDescriptor openFile(Uri u,String m)throws FileNotFoundException{if(!m.equals("r"))throw new FileNotFoundException();return ParcelFileDescriptor.open(safe(u),ParcelFileDescriptor.MODE_READ_ONLY);}
+ @Override public String getType(Uri u){try{String n=safe(u).getName();int i=n.lastIndexOf('.');String m=i<0?null:MimeTypeMap.getSingleton().getMimeTypeFromExtension(n.substring(i+1).toLowerCase(Locale.ROOT));return m==null?"application/octet-stream":m;}catch(Exception e){return "application/octet-stream";}}
+ @Override public Cursor query(Uri u,String[] p,String s,String[] a,String sort){try{File f=safe(u);String[] cols=p==null?new String[]{OpenableColumns.DISPLAY_NAME,OpenableColumns.SIZE}:p;MatrixCursor c=new MatrixCursor(cols);Object[] vals=new Object[cols.length];for(int i=0;i<cols.length;i++){if(cols[i].equals(OpenableColumns.DISPLAY_NAME))vals[i]=f.getName();if(cols[i].equals(OpenableColumns.SIZE))vals[i]=f.length();}c.addRow(vals);return c;}catch(Exception e){return null;}}
+ @Override public Uri insert(Uri u,ContentValues v){throw new UnsupportedOperationException();} @Override public int delete(Uri u,String s,String[] a){throw new UnsupportedOperationException();} @Override public int update(Uri u,ContentValues v,String s,String[] a){throw new UnsupportedOperationException();}
+}
